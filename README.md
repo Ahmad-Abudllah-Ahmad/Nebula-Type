@@ -22,9 +22,9 @@ graph TD
 ```mermaid
 graph LR
     A[Sphere Generation] --> B[Fibonacci Spiral Method]
-    B --> C[x = r × cosθ × sinΦ]
-    B --> D[y = r × sinθ × sinΦ]
-    B --> E[z = r × cosΦ]
+    B --> C["x = r × cosθ × sinΦ"]
+    B --> D["y = r × sinθ × sinΦ"]
+    B --> E["z = r × cosΦ"]
     E --> F[Uniform Distribution]
     
     G[Text Generation] --> H[Canvas Rasterization]
@@ -32,15 +32,15 @@ graph LR
     I --> J[Coordinate Mapping]
     
     K[Morphing Animation] --> L[Linear Interpolation]
-    L --> M[pos = mix(spherePos, textPos, uMix)]
+    L --> M["pos = mix(spherePos, textPos, uMix)"]
     
     N[Explosion Effect] --> O[Noise Functions]
-    O --> P[x = sin(p×0.8+t) × cos(p×0.8+t)]
+    O --> P["x = sin(p×0.8+t) × cos(p×0.8+t)"]
     O --> Q[Vector Normalization]
     
     R[Particle Rotation] --> S[2D Rotation Matrix]
-    S --> T[x' = x×cos(α) - y×sin(α)]
-    S --> U[y' = x×sin(α) + y×cos(α)]
+    S --> T["x' = x×cos&#40;α&#41; - y×sin&#40;α&#41;"]
+    S --> U["y' = x×sin&#40;α&#41; + y×cos&#40;α&#41;"]
 ```
 
 ## Features
