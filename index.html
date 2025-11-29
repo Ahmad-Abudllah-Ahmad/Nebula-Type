@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Morph: Distorted Spiral</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="loading">Generating Particles...</div>
+    <div id="ui">
+        <div class="input-group">
+            <input type="text" id="textInput" value="Inside Compilers">
+            <button id="updateBtn">Create</button>
+        </div>
+        <div id="footer">
+            Developed by <a href="https://aaahmadthedev.vercel.app/" target="_blank">AAAhmad the dev</a>
+        </div>
+    </div>
+
+    <!-- Import Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Vertex Shader -->
+    <script type="x-shader/x-vertex" id="vertexshader">
+        uniform float uTime;
+        uniform float uMix; // 0.0 = Sphere, 1.0 = Text
+        uniform float uExplosion; // Magnitude of the chaos/noise
+        
+        attribute vec3 positionSphere;
+        attribute vec3 positionText;
+        attribute float aRandom; // Random seed per particle
+        
+        varying float vAlpha;
+        
+        // 2D Rotation Matrix
+        vec2 rotate(vec2 v, float a) {
+            float s = sin(a);
+            float c = cos(a);
+            return mat2(c, -s, s, c) * v;
+        }
+
+        // Noise function for organic turbulence
+        vec3 getNoise(vec3 p, float t) {
+            float x = sin(p.x * 0.8 + t) * cos(p.y * 0.8 + t);
+            float y = sin(p.y * 0.8 + t) * cos(p.z * 0.8 + t);
+            float z = sin(p.z * 0.8 + t) * cos(p.x * 0.8 + t);
+            return vec3(x, y, z);
+        }
+
+        void main() {
+            vec3 pos = mix(positionSphere, positionText, uMix);
+
+            if (uExplosion > 0.1) {
+                float dist = length(pos.xz);
+                float twist = uExplosion * 0.1; 
+                float angle = twist * (5.0 - dist * 0.05) + uTime * 0.5; 
+                
+                pos.xz = rotate(pos.xz, angle);
+
+                float flattenFactor = 1.0 - smoothstep(0.0, 50.0, uExplosion) * 0.9;
+                pos.y *= flattenFactor;
+            }
+
+            vec3 noise = getNoise(pos * 0.08, uTime * 0.8);
+            vec3 explosionDir = normalize(pos + noise * 30.0);
+            
+            pos += explosionDir * uExplosion;
+            pos.z += (aRandom - 0.5) * 60.0 * uExplosion;
+
+            float jitter = 0.05;
+            pos.x += sin(uTime * 3.0 + aRandom * 100.0) * jitter;
+            pos.y += cos(uTime * 2.5 + aRandom * 100.0) * jitter;
+            pos.z += sin(uTime * 2.0 + aRandom * 100.0) * jitter;
+
+            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+            gl_PointSize = (12.0 * (30.0 / -mvPosition.z));
+            vAlpha = 1.0 + 0.5 * sin(uTime * 2.0 + aRandom * 10.0);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    </script>
+
+    <!-- Fragment Shader -->
+    <script type="x-shader/x-fragment" id="fragmentshader">
+        uniform vec3 uColor;
+        uniform vec3 uColorText;
+        uniform float uMix;
+        varying float vAlpha;
+
+        void main() {
+            vec2 coord = gl_PointCoord - vec2(0.5);
+            float dist = length(coord);
+            if(dist > 0.5) discard;
+
+            float strength = 1.0 - (dist * 2.0);
+            strength = pow(strength, 1.5); 
+
+            vec3 finalColor = mix(uColor, uColorText, uMix);
+            gl_FragColor = vec4(finalColor * 1.5, strength * vAlpha);
+        }
+    </script>
+    
+    <!-- Background Particle Shaders -->
+    <script type="x-shader/x-vertex" id="bgVertexShader">
+        uniform float uTime;
+        attribute float aRandom;
+        attribute float aSize;
+        varying float vAlpha;
+        
+        void main() {
+            vec3 pos = position;
+            pos.z += mod(uTime * 2.0 + aRandom * 500.0, 500.0) - 250.0;
+            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+            gl_PointSize = (aSize * (30.0 / -mvPosition.z));
+            vAlpha = 0.6 + 0.4 * sin(uTime * 0.5 + aRandom * 20.0);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    </script>
+    
+    <script type="x-shader/x-fragment" id="bgFragmentShader">
+        uniform vec3 uColor;
+        varying float vAlpha;
+        
+        void main() {
+            vec2 coord = gl_PointCoord - vec2(0.5);
+            float dist = length(coord);
+            if(dist > 0.5) discard;
+            float strength = 1.0 - (dist * 2.0);
+            strength = pow(strength, 3.0); 
+            gl_FragColor = vec4(uColor, strength * vAlpha);
+        }
+    </script>
+
+    <script src="script.js"></script>
+</body>
+</html>
